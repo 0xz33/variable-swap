@@ -1,0 +1,15 @@
+{
+  "name": "variable-swap",
+  "version": "1.0.0",
+  "description": "Below are the steps to get your plugin running. You can also find instructions at:",
+  "main": "code.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.97.0"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Variable Swap",
+  "id": "your-plugin-id",
+  "api": "1.0.0",
+  "main": "code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  },
+  "permissions": ["teamlibrary"]
+}
