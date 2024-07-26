@@ -1,0 +1,5 @@
+v1 release
+- apply to strokes
+- expand mappings
+v2 release
+custom mapping ui

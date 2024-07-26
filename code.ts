@@ -2,7 +2,32 @@
 
 // Mapping object
 const colorMapping: { [key: string]: string } = {
-  "OLD NEUTRALS/default/T__primary-default": "Primary/900",
+  "OLD NEUTRALS/default/T__primary-default": "Neutral/600", // Bg-600
+  "OLD NEUTRALS/default/T__primary-hover": "Neutral/700", // Bg-700
+  "OLD NEUTRALS/default/T__primary-focus": "Neutral/300", // Bg-300
+  "OLD NEUTRALS/default/T__primary-active": "Neutral/800", // Bg-800
+  "OLD NEUTRALS/default/T__primary-disabled": "Neutral/50", // Bg-50
+  "Info/T__default/T__common-info-default": "Info/500", // Info-500
+  "Info/T__default/T__common-info-hover": "Info/600", // Info-600
+  "Info/T__default/T__common-info-focus": "Info/700", // Info-700
+  "Info/T__default/T__common-info-active": "Info/800", // Info-800
+  "Info/T__default/T__common-info-disabled": "Info/50", // Info-50
+  "warning/T__default/T__common-warning-default": "Warning/600", // Warning-600
+  "warning/T__default/T__common-warning-hover": "Warning/700", // Warning-700
+  "warning/T__default/T__common-warning-focus": "Warning/800", // Warning-800
+  "warning/T__default/T__common-warning-active": "Warning/900", // Warning-900
+  "warning/T__default/T__common-warning-disabled": "Warning/50", // Warning-50
+  "error/T__default/T__common-error-default": "Error/700", // Error-700
+  "error/T__default/T__common-error-hover": "Error/800", // Error-800
+  "error/T__default/T__common-error-focus": "Error/900", // Error-900
+  "error/T__default/T__common-error-active": "Error/925", // Error-925
+  "error/T__default/T__common-error-disabled": "Error/50", // Error-50
+  "success/T__default/T__common-success-default": "Success/600", // Success-600
+  "success/T__default/T__common-success-hover": "Success/700", // Success-700
+  "success/T__default/T__common-success-focus": "Success/800", // Success-800
+  "success/T__default/T__common-success-active": "Success/900", // Success-900
+  "success/T__default/T__common-success-disabled": "Success/50", // Success-50
+  "T__surface/T__background": "Neutral/00", // Surface
 };
 
 async function getNodeVariables(
@@ -66,7 +91,7 @@ async function findVariableByName(name: string): Promise<Variable | null> {
 
 async function main() {
   const selection = figma.currentPage.selection;
-  ``;
+  let changesMade = 0; // Track the number of changes made
 
   if (selection.length === 0) {
     figma.notify("No nodes selected");
@@ -80,24 +105,23 @@ async function main() {
           console.log(`- ${v.property}: ${v.name}`);
           if (v.property === "fills" && colorMapping[v.name]) {
             const newVariableName = colorMapping[v.name];
-            console.log(`  Should be changed titty: ${newVariableName}`);
+            console.log(`  Should be changed to: ${newVariableName}`);
 
             const newVariable = await findVariableByName(newVariableName);
 
             if (newVariable) {
               // Set the new variable
               if ("fills" in node && Array.isArray(node.fills)) {
-                // Cast node.fills to a mutable array
                 const mutableFills = [...node.fills]; // Create a mutable copy
                 node.fills.forEach((fill, index) => {
                   if (fill.type === "SOLID") {
-                    // Create a new paint object with the bound variable
                     const newFill = figma.variables.setBoundVariableForPaint(
                       fill,
                       "color",
                       newVariable
                     );
                     mutableFills[index] = newFill; // Update the fill in the mutable array
+                    changesMade++; // Increment the changes counter
                   }
                 });
                 node.fills = mutableFills; // Assign back to node.fills
@@ -119,7 +143,8 @@ async function main() {
     }
   }
 
-  figma.closePlugin();
+  // Close the plugin and notify the number of changes made
+  figma.closePlugin(`${changesMade} changes made.`);
 }
 
 main();
