@@ -7,26 +7,26 @@ const colorMapping: { [key: string]: string } = {
   "OLD NEUTRALS/default/T__primary-focus": "Neutral/300", // Bg-300
   "OLD NEUTRALS/default/T__primary-active": "Neutral/800", // Bg-800
   "OLD NEUTRALS/default/T__primary-disabled": "Neutral/50", // Bg-50
-  "Info/T__default/T__common-info-default": "Info/500", // Info-500
-  "Info/T__default/T__common-info-hover": "Info/600", // Info-600
-  "Info/T__default/T__common-info-focus": "Info/700", // Info-700
-  "Info/T__default/T__common-info-active": "Info/800", // Info-800
-  "Info/T__default/T__common-info-disabled": "Info/50", // Info-50
-  "warning/T__default/T__common-warning-default": "Warning/600", // Warning-600
-  "warning/T__default/T__common-warning-hover": "Warning/700", // Warning-700
-  "warning/T__default/T__common-warning-focus": "Warning/800", // Warning-800
-  "warning/T__default/T__common-warning-active": "Warning/900", // Warning-900
-  "warning/T__default/T__common-warning-disabled": "Warning/50", // Warning-50
-  "error/T__default/T__common-error-default": "Error/700", // Error-700
-  "error/T__default/T__common-error-hover": "Error/800", // Error-800
-  "error/T__default/T__common-error-focus": "Error/900", // Error-900
-  "error/T__default/T__common-error-active": "Error/925", // Error-925
-  "error/T__default/T__common-error-disabled": "Error/50", // Error-50
-  "success/T__default/T__common-success-default": "Success/600", // Success-600
-  "success/T__default/T__common-success-hover": "Success/700", // Success-700
-  "success/T__default/T__common-success-focus": "Success/800", // Success-800
-  "success/T__default/T__common-success-active": "Success/900", // Success-900
-  "success/T__default/T__common-success-disabled": "Success/50", // Success-50
+  "Info/T__default/T__info-default": "Info/500", // Info-500
+  "Info/T__default/T__info-hover": "Info/600", // Info-600
+  "Info/T__default/T__info-focus": "Info/700", // Info-700
+  "Info/T__default/T__info-active": "Info/800", // Info-800
+  "Info/T__default/T__info-disabled": "Info/50", // Info-50
+  "warning/T__default/T__warning-default": "Warning/600", // Warning-600
+  "warning/T__default/T__warning-hover": "Warning/700", // Warning-700
+  "warning/T__default/T__warning-focus": "Warning/800", // Warning-800
+  "warning/T__default/T__warning-active": "Warning/900", // Warning-900
+  "warning/T__default/T__warning-disabled": "Warning/50", // Warning-50
+  "error/T__default/T__error-default": "Error/700", // Error-700
+  "error/T__default/T__error-hover": "Error/800", // Error-800
+  "error/T__default/T__error-focus": "Error/900", // Error-900
+  "error/T__default/T__error-active": "Error/925", // Error-925
+  "error/T__default/T__error-disabled": "Error/50", // Error-50
+  "success/T__default/T__success-default": "Success/600", // Success-600
+  "success/T__default/T__success-hover": "Success/700", // Success-700
+  "success/T__default/T__success-focus": "Success/800", // Success-800
+  "success/T__default/T__success-active": "Success/900", // Success-900
+  "success/T__default/T__success-disabled": "Success/50", // Success-50
   "T__surface/T__background": "Neutral/00", // Surface
 };
 
@@ -103,6 +103,8 @@ async function main() {
         console.log("Applied variables:");
         for (const v of variables) {
           console.log(`- ${v.property}: ${v.name}`);
+
+          // Handle fills
           if (v.property === "fills" && colorMapping[v.name]) {
             const newVariableName = colorMapping[v.name];
             console.log(`  Should be changed to: ${newVariableName}`);
@@ -110,7 +112,6 @@ async function main() {
             const newVariable = await findVariableByName(newVariableName);
 
             if (newVariable) {
-              // Set the new variable
               if ("fills" in node && Array.isArray(node.fills)) {
                 const mutableFills = [...node.fills]; // Create a mutable copy
                 node.fills.forEach((fill, index) => {
@@ -125,9 +126,42 @@ async function main() {
                   }
                 });
                 node.fills = mutableFills; // Assign back to node.fills
-                console.log(`  Variable updated to: ${newVariableName}`);
+                console.log(`  Fills updated to: ${newVariableName}`);
               } else {
                 console.log(`  Error: Node doesn't support fills`);
+              }
+            } else {
+              console.log(
+                `  Error: New variable "${newVariableName}" not found`
+              );
+            }
+          }
+
+          // Handle strokes
+          if (v.property === "strokes" && colorMapping[v.name]) {
+            const newVariableName = colorMapping[v.name];
+            console.log(`  Should be changed to: ${newVariableName}`);
+
+            const newVariable = await findVariableByName(newVariableName);
+
+            if (newVariable) {
+              if ("strokes" in node && Array.isArray(node.strokes)) {
+                const mutableStrokes = [...node.strokes]; // Create a mutable copy
+                node.strokes.forEach((stroke, index) => {
+                  if (stroke.type === "SOLID") {
+                    const newStroke = figma.variables.setBoundVariableForPaint(
+                      stroke,
+                      "color",
+                      newVariable
+                    );
+                    mutableStrokes[index] = newStroke; // Update the stroke in the mutable array
+                    changesMade++; // Increment the changes counter
+                  }
+                });
+                node.strokes = mutableStrokes; // Assign back to node.strokes
+                console.log(`  Strokes updated to: ${newVariableName}`);
+              } else {
+                console.log(`  Error: Node doesn't support strokes`);
               }
             } else {
               console.log(
