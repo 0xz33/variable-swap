@@ -7,11 +7,11 @@ const colorMapping: { [key: string]: string } = {
   "OLD NEUTRALS/default/T__primary-focus": "Neutral/300", // Bg-300
   "OLD NEUTRALS/default/T__primary-active": "Neutral/800", // Bg-800
   "OLD NEUTRALS/default/T__primary-disabled": "Neutral/50", // Bg-50
-  "Info/T__default/T__info-default": "Info/500", // Info-500
-  "Info/T__default/T__info-hover": "Info/600", // Info-600
-  "Info/T__default/T__info-focus": "Info/700", // Info-700
-  "Info/T__default/T__info-active": "Info/800", // Info-800
-  "Info/T__default/T__info-disabled": "Info/50", // Info-50
+  "Info/default/T__info-default": "Info/500", // Info-500
+  "Info/default/T__info-hover": "Info/600", // Info-600
+  "Info/default/T__info-focus": "Info/700", // Info-700
+  "Info/default/T__info-active": "Info/800", // Info-800
+  "Info/default/T__info-disabled": "Info/50", // Info-50
   "warning/T__default/T__warning-default": "Warning/600", // Warning-600
   "warning/T__default/T__warning-hover": "Warning/700", // Warning-700
   "warning/T__default/T__warning-focus": "Warning/800", // Warning-800
@@ -33,6 +33,7 @@ const colorMapping: { [key: string]: string } = {
 async function getNodeVariables(
   node: SceneNode
 ): Promise<{ property: string; name: string }[]> {
+  ``;
   const variables: { property: string; name: string }[] = [];
   if ("boundVariables" in node && node.boundVariables) {
     for (const [property, bindings] of Object.entries(node.boundVariables)) {
@@ -97,88 +98,102 @@ async function main() {
     figma.notify("No nodes selected");
   } else {
     for (const node of selection) {
-      console.log(`Node: ${node.name}`);
-      const variables = await getNodeVariables(node);
-      if (variables.length > 0) {
-        console.log("Applied variables:");
-        for (const v of variables) {
-          console.log(`- ${v.property}: ${v.name}`);
-
-          // Handle fills
-          if (v.property === "fills" && colorMapping[v.name]) {
-            const newVariableName = colorMapping[v.name];
-            console.log(`  Should be changed to: ${newVariableName}`);
-
-            const newVariable = await findVariableByName(newVariableName);
-
-            if (newVariable) {
-              if ("fills" in node && Array.isArray(node.fills)) {
-                const mutableFills = [...node.fills]; // Create a mutable copy
-                node.fills.forEach((fill, index) => {
-                  if (fill.type === "SOLID") {
-                    const newFill = figma.variables.setBoundVariableForPaint(
-                      fill,
-                      "color",
-                      newVariable
-                    );
-                    mutableFills[index] = newFill; // Update the fill in the mutable array
-                    changesMade++; // Increment the changes counter
-                  }
-                });
-                node.fills = mutableFills; // Assign back to node.fills
-                console.log(`  Fills updated to: ${newVariableName}`);
-              } else {
-                console.log(`  Error: Node doesn't support fills`);
-              }
-            } else {
-              console.log(
-                `  Error: New variable "${newVariableName}" not found`
-              );
-            }
-          }
-
-          // Handle strokes
-          if (v.property === "strokes" && colorMapping[v.name]) {
-            const newVariableName = colorMapping[v.name];
-            console.log(`  Should be changed to: ${newVariableName}`);
-
-            const newVariable = await findVariableByName(newVariableName);
-
-            if (newVariable) {
-              if ("strokes" in node && Array.isArray(node.strokes)) {
-                const mutableStrokes = [...node.strokes]; // Create a mutable copy
-                node.strokes.forEach((stroke, index) => {
-                  if (stroke.type === "SOLID") {
-                    const newStroke = figma.variables.setBoundVariableForPaint(
-                      stroke,
-                      "color",
-                      newVariable
-                    );
-                    mutableStrokes[index] = newStroke; // Update the stroke in the mutable array
-                    changesMade++; // Increment the changes counter
-                  }
-                });
-                node.strokes = mutableStrokes; // Assign back to node.strokes
-                console.log(`  Strokes updated to: ${newVariableName}`);
-              } else {
-                console.log(`  Error: Node doesn't support strokes`);
-              }
-            } else {
-              console.log(
-                `  Error: New variable "${newVariableName}" not found`
-              );
-            }
-          }
-        }
-      } else {
-        console.log("No variables applied");
-      }
-      console.log("---");
+      changesMade = await processNode(node, changesMade);
     }
   }
 
   // Close the plugin and notify the number of changes made
   figma.closePlugin(`${changesMade} changes made.`);
 }
+
+// Recursive function to process nodes and their children
+async function processNode(
+  node: SceneNode,
+  changesMade: number
+): Promise<number> {
+  const variables = await getNodeVariables(node);
+
+  if (variables.length > 0) {
+    console.log(`Node: ${node.name}`);
+    console.log("Applied variables:");
+
+    for (const v of variables) {
+      console.log(`- ${v.property}: ${v.name}`);
+
+      // Handle fills
+      if (v.property === "fills" && colorMapping[v.name]) {
+        const newVariableName = colorMapping[v.name];
+        console.log(`  Should be changed to: ${newVariableName}`);
+
+        const newVariable = await findVariableByName(newVariableName);
+
+        if (newVariable) {
+          if ("fills" in node && Array.isArray(node.fills)) {
+            const mutableFills = [...node.fills]; // Create a mutable copy
+            node.fills.forEach((fill, index) => {
+              if (fill.type === "SOLID") {
+                const newFill = figma.variables.setBoundVariableForPaint(
+                  fill,
+                  "color",
+                  newVariable
+                );
+                mutableFills[index] = newFill; // Update the fill in the mutable array
+                changesMade++; // Increment the changes counter
+              }
+            });
+            node.fills = mutableFills; // Assign back to node.fills
+            console.log(`  Fills updated to: ${newVariableName}`);
+          } else {
+            console.log(`  Error: Node doesn't support fills`);
+          }
+        } else {
+          console.log(`  Error: New variable "${newVariableName}" not found`);
+        }
+      }
+
+      // Handle strokes
+      if (v.property === "strokes" && colorMapping[v.name]) {
+        const newVariableName = colorMapping[v.name];
+        console.log(`  Should be changed to: ${newVariableName}`);
+
+        const newVariable = await findVariableByName(newVariableName);
+
+        if (newVariable) {
+          if ("strokes" in node && Array.isArray(node.strokes)) {
+            const mutableStrokes = [...node.strokes]; // Create a mutable copy
+            node.strokes.forEach((stroke, index) => {
+              if (stroke.type === "SOLID") {
+                const newStroke = figma.variables.setBoundVariableForPaint(
+                  stroke,
+                  "color",
+                  newVariable
+                );
+                mutableStrokes[index] = newStroke; // Update the stroke in the mutable array
+                changesMade++; // Increment the changes counter
+              }
+            });
+            node.strokes = mutableStrokes; // Assign back to node.strokes
+            console.log(`  Strokes updated to: ${newVariableName}`);
+          } else {
+            console.log(`  Error: Node doesn't support strokes`);
+          }
+        } else {
+          console.log(`  Error: New variable "${newVariableName}" not found`);
+        }
+      }
+    }
+  }
+
+  // Process children nodes
+  if ("children" in node) {
+    for (const child of node.children) {
+      changesMade = await processNode(child, changesMade);
+    }
+  }
+
+  return changesMade;
+}
+
+main();
 
 main();
