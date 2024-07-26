@@ -2,7 +2,7 @@
 
 // Mapping object
 const colorMapping: { [key: string]: string } = {
-  "OLD NEUTRALS/default/T__primary-default": "Primary/500",
+  "OLD NEUTRALS/default/T__primary-default": "Primary/900",
 };
 
 async function getNodeVariables(
@@ -66,6 +66,7 @@ async function findVariableByName(name: string): Promise<Variable | null> {
 
 async function main() {
   const selection = figma.currentPage.selection;
+  ``;
 
   if (selection.length === 0) {
     figma.notify("No nodes selected");
@@ -79,17 +80,30 @@ async function main() {
           console.log(`- ${v.property}: ${v.name}`);
           if (v.property === "fills" && colorMapping[v.name]) {
             const newVariableName = colorMapping[v.name];
-            console.log(`  Should be changed to: ${newVariableName}`);
+            console.log(`  Should be changed titty: ${newVariableName}`);
 
             const newVariable = await findVariableByName(newVariableName);
 
             if (newVariable) {
               // Set the new variable
-              if ("setBoundVariable" in node) {
-                (node as any).setBoundVariable("fills", newVariable);
+              if ("fills" in node && Array.isArray(node.fills)) {
+                // Cast node.fills to a mutable array
+                const mutableFills = [...node.fills]; // Create a mutable copy
+                node.fills.forEach((fill, index) => {
+                  if (fill.type === "SOLID") {
+                    // Create a new paint object with the bound variable
+                    const newFill = figma.variables.setBoundVariableForPaint(
+                      fill,
+                      "color",
+                      newVariable
+                    );
+                    mutableFills[index] = newFill; // Update the fill in the mutable array
+                  }
+                });
+                node.fills = mutableFills; // Assign back to node.fills
                 console.log(`  Variable updated to: ${newVariableName}`);
               } else {
-                console.log(`  Error: Node doesn't support setBoundVariable`);
+                console.log(`  Error: Node doesn't support fills`);
               }
             } else {
               console.log(

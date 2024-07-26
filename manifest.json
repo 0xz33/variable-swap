@@ -1,13 +1,15 @@
 {
-  "name": "Variable Swap",
-  "id": "your-plugin-id",
+  "name": "VarSwap",
+  "id": "1398477396827179586",
   "api": "1.0.0",
   "main": "code.js",
   "capabilities": [],
   "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
   "editorType": ["figma"],
+  "ui": "ui.html",
+  "permissions": ["teamlibrary"],
   "networkAccess": {
     "allowedDomains": ["none"]
-  },
-  "permissions": ["teamlibrary"]
+  }
 }
